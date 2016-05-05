@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:dubbo="http://code.alibabatech.com/schema/dubbo" xmlns:jee="http://www.springframework.org/schema/jee"
+	xmlns:lang="http://www.springframework.org/schema/lang" xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:util="http://www.springframework.org/schema/util"
+	xmlns:task="http://www.springframework.org/schema/task"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd
+        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+        http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee.xsd
+        http://www.springframework.org/schema/lang http://www.springframework.org/schema/lang/spring-lang.xsd
+        http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd
+        http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd
+        http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task-3.1.xsd
+        http://code.alibabatech.com/schema/dubbo       
+        http://code.alibabatech.com/schema/dubbo/dubbo.xsd">
+
+	<!-- Root Context: defines shared resources visible to all other web components -->
+	<context:property-placeholder location="classpath:setting.properties" />
+
+	<!-- redis连接池配置 -->
+	<bean id="genericObjectPoolConfig" class="org.apache.commons.pool2.impl.GenericObjectPoolConfig">
+		<property name="maxTotal" value="60" />
+		<property name="maxIdle" value="30" />
+		<property name="maxWaitMillis" value="100" />
+		<property name="testOnBorrow" value="false" />
+	</bean>
+	
+	<bean id="localeResolver"
+		class="org.springframework.web.servlet.i18n.CookieLocaleResolver" />
+
+	<!-- jedisCluster配置 -->
+	<bean id="jedisCluster" class="redis.clients.jedis.JedisCluster">
+		<constructor-arg index="0">
+			<set>
+				<bean class="redis.clients.jedis.HostAndPort">
+					<constructor-arg type="String" value="${redis0.host}" />
+					<constructor-arg type="int" value="${redis0.port}" />
+				</bean>
+				<bean class="redis.clients.jedis.HostAndPort">
+					<constructor-arg type="String" value="${redis1.host}" />
+					<constructor-arg type="int" value="${redis1.port}" />
+				</bean>
+			</set>
+		</constructor-arg>
+		<constructor-arg index="1" ref="genericObjectPoolConfig" />
+	</bean>
+	
+	<bean id="multipartResolver"
+			class="org.springframework.web.multipart.commons.CommonsMultipartResolver"
+			p:defaultEncoding="utf-8">
+		<!-- 200M -->
+		<property name="maxUploadSize" value="2028098000" />
+	</bean>
+
+	<!-- 项目注册包 -->
+	<dubbo:reference interface="com.mobisoft.wallet.api.WalletBizApi" 
+		id="WalletBizApi" version="1.0.0" timeout="5000">
+	</dubbo:reference>
+	
+	<dubbo:reference interface="com.mobisoft.trade.api.TradeBizApi" 
+		id="TradeBizApi" version="1.0.0" timeout="5000">
+	</dubbo:reference>
+	
+	<dubbo:reference interface="com.mobisoft.account.api.AccountBizApi" 
+		id="AccountBizApi" version="1.0.0" timeout="5000">
+	</dubbo:reference>
+
+	<!-- 提供方应用信息，用于计算依赖关系 -->
+	<dubbo:application name="gateway-consumer" owner="it" organization="capli" />
+	<!-- 使用zookeeper注册中心暴露服务地址 -->
+	<dubbo:registry address="${dubbo.register}" timeout="50000" />
+	<dubbo:annotation package="com.mobisoft.mobile" />
+
+</beans>

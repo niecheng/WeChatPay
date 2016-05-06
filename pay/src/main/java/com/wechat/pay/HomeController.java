@@ -11,12 +11,13 @@ import org.springframework.web.bind.annotation.RequestMethod;
  * Handles requests for the application home page.
  */
 @Controller
-@RequestMapping(value = "/")
-public class HomeController {
-          
-  @RequestMapping(method = RequestMethod.GET)
-    public String printWelcome(ModelMap model) {
+@RequestMapping(value = "/test")
+public class HomeController {     
+	
+  @RequestMapping(value= "/t" ,method = RequestMethod.GET)
+  public String printWelcome(ModelMap model) {
          model.addAttribute("serverTime", new Date());
+         System.out.println("date:"  +  new Date());
         return "home";
     }
 }

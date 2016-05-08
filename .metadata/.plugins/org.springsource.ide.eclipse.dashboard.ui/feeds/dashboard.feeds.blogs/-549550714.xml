@@ -5,7 +5,108 @@
   <link rel="self" href="https://spring.io/blog.atom" />
   <id>http://spring.io/blog.atom</id>
   <icon>https://spring.io/favicon.ico</icon>
-  <updated>2016-05-05T12:15:00Z</updated>
+  <updated>2016-05-06T18:43:00Z</updated>
+  <entry>
+    <title>Spring AMQP 1.6.0 Release Candidate (and 1.5.6) Available</title>
+    <link rel="alternate" href="https://spring.io/blog/2016/05/06/spring-amqp-1-6-0-release-candidate-and-1-5-6-available" />
+    <category term="releases" label="Releases" />
+    <author>
+      <name>Gary Russell</name>
+    </author>
+    <id>tag:spring.io,2016-05-04:2490</id>
+    <updated>2016-05-06T18:43:00Z</updated>
+    <content type="html">&lt;p&gt;We are pleased to announce that the Spring AMQP 1.6 release candidate (1.6.0.RC1) is now available in the &lt;a href="https://repo.spring.io/milestone"&gt;spring milestone repo&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;The 1.5.6 maintenance release is also available with a &lt;a href="https://jira.spring.io/jira/secure/ReleaseNote.jspa?projectId=10450&amp;version=15517"&gt;few bug fixes&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;Here is a summary of the 1.6.0 release contents, for more details, refer to the &lt;a href="http://docs.spring.io/spring-amqp/docs/1.6.0.RC1/reference/html/_introduction.html#whats-new"&gt;what&amp;rsquo;s new&lt;/a&gt; in the reference documentation as well as &lt;a href="https://jira.spring.io/issues/?jql=project%20%3D%20AMQP%20AND%20status%20%3D%20Closed%20AND%20fixVersion%20in%20%28%221.6%20M1%22%2C%20%221.6%20M2%22%2C%20%221.6%20RC1%22%29%20%20ORDER%20BY%20fixVersion%2C%20priority%20DESC"&gt;the closed JIRA Issues for this release&lt;/a&gt;.&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;
+  &lt;p&gt;A new jar &lt;code&gt;spring-rabbit-test&lt;/code&gt; containing a test harness to help with testing &lt;code&gt;@RabbitListener&lt;/code&gt; methods; see &lt;a href="http://docs.spring.io/spring-amqp/docs/1.6.0.RC1/reference/html/_reference.html#testing"&gt;the testing chapter&lt;/a&gt;.&lt;/p&gt;&lt;/li&gt;
+  &lt;li&gt;
+  &lt;p&gt;Multiple &lt;code&gt;@RabbitListener&lt;/code&gt; annotations on a method (when using Java 8) and the &lt;code&gt;@RabbitListeners&lt;/code&gt; annotation (for pre-Java 8), each allowing the same method to be the listener method for multiple listener containers.&lt;/p&gt;&lt;/li&gt;
+  &lt;li&gt;
+  &lt;p&gt;Full support for the &lt;a href="https://www.rabbitmq.com/blog/2015/04/16/scheduling-messages-with-rabbitmq/"&gt;Delayed Message Exchange&lt;/a&gt; RabbitMQ plugin.&lt;/p&gt;&lt;/li&gt;
+  &lt;li&gt;
+  &lt;p&gt;An &lt;code&gt;AsyncRabbitTemplate&lt;/code&gt; returning &lt;code&gt;ListenableFuture&amp;lt;?&amp;gt;&lt;/code&gt; for request/reply messaging.&lt;/p&gt;&lt;/li&gt;
+  &lt;li&gt;
+  &lt;p&gt;An option to publish &lt;code&gt;ApplicationEvents&lt;/code&gt; when listener containers go idle.&lt;/p&gt;&lt;/li&gt;
+  &lt;li&gt;
+  &lt;p&gt;The caching connection factory now exposes cache statistics&lt;/p&gt;&lt;/li&gt;
+  &lt;li&gt;
+  &lt;p&gt;&lt;code&gt;@RabbitListener&lt;/code&gt; methods now communicate type information to the message converter for inbound messages. This means, for example, the &lt;code&gt;Jackson2JsonMessageConverter&lt;/code&gt; no longer needs a custom class mapper when a message without type information in the headers is received (e.g. from a sender that is not a Spring AMQP app). Instead, the &lt;code&gt;@RabbitListener&lt;/code&gt; method parameter type is used in the conversion. In addition, the &lt;code&gt;Method&lt;/code&gt; and &lt;code&gt;bean&lt;/code&gt; are also made available via message properties to custom converters.&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;pre&gt;&lt;code class="prettyprint java"&gt;@Bean&#xD;
+public SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory(&#xD;
+		ConnectionFactory rabbitConnectionFactory) {&#xD;
+	SimpleRabbitListenerContainerFactory factory = &#xD;
+             new SimpleRabbitListenerContainerFactory();&#xD;
+	factory.setConnectionFactory(rabbitConnectionFactory);&#xD;
+	factory.setMessageConverter(new Jackson2JsonMessageConverter());&#xD;
+	return factory;&#xD;
+}&#xD;
+&#xD;
+public static class MyService {&#xD;
+&#xD;
+	@RabbitListener(queues=&amp;quot;foos&amp;quot;)&#xD;
+	public void handleFoos(Foo foo) {&#xD;
+	    ...&#xD;
+	}&#xD;
+&#xD;
+	@RabbitListener(queues=&amp;quot;lists.of.bars&amp;quot;)&#xD;
+	public void handleBarLists(List&amp;lt;Bar&amp;gt; bars) {&#xD;
+            ...&#xD;
+	}&#xD;
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;ul&gt;
+  &lt;li&gt;
+  &lt;p&gt;&lt;code&gt;@RabbitListener&lt;/code&gt; irrecoverable errors are now considered to be fatal by the default error handler, to avoid endless redelivery of such messages.&lt;/p&gt;&lt;/li&gt;
+  &lt;li&gt;
+  &lt;p&gt;&lt;code&gt;@RabbitListener&lt;/code&gt; &lt;code&gt;@SendTo&lt;/code&gt; addresses (used when the inbound message has no &lt;code&gt;replyTo&lt;/code&gt;) can now contain a &lt;code&gt;SpEL&lt;/code&gt; expression evaluated at runtime against the input and output message.&lt;/p&gt;&lt;/li&gt;
+  &lt;li&gt;
+  &lt;p&gt;When using java serialized messages, you can now specify a &amp;ldquo;white list&amp;rdquo; of allowable classes/packages for deserialization. This is recommended when receiving serialized objects from untrusted sources.&lt;/p&gt;&lt;/li&gt;
+  &lt;li&gt;
+  &lt;p&gt;You can now declare &amp;lsquo;internal&amp;rsquo; exchanges to which messages cannot be directly published.&lt;/p&gt;&lt;/li&gt;
+  &lt;li&gt;
+  &lt;p&gt;The log appenders can now be configured with multiple broker addresses and client properties can be set.&lt;/p&gt;&lt;/li&gt;
+  &lt;li&gt;
+  &lt;p&gt;&lt;code&gt;@QueueBinding&lt;/code&gt; annotations now support arguments for queues, exchanges and bindings.&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;We expect to have the final release at the end of May.&lt;/p&gt;
+&lt;p&gt;Please download and try the release candidate so we can address any issues before GA. Next up (2017) is 2.0 which will may require Spring 5 and include some Reactive Streams effort.&lt;/p&gt;
+&lt;p&gt;We welcome any feedback, questions, or help, using the usual mechanisms:&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://projects.spring.io/spring-amqp/"&gt;Project Page&lt;/a&gt; | &lt;a href="https://jira.spring.io/browse/AMQP"&gt;JIRA&lt;/a&gt; | &lt;a href="https://github.com/spring-projects/spring-amqp/blob/master/CONTRIBUTING.adoc"&gt;Contribution&lt;/a&gt; | &lt;a href="http://stackoverflow.com/questions/tagged/spring-amqp"&gt;Help&lt;/a&gt;&lt;/p&gt;
+&lt;div class="callout"&gt;&#xD;
+&lt;div class="callout-title"&gt;Upcoming Conferences&lt;/div&gt;&#xD;
+&lt;p&gt;Be sure to register for &lt;a href="http://www.springio.net/"&gt;Spring I/O conference&lt;/a&gt; where you can learn about the latest and greatest Spring has to offer.&lt;/p&gt;&#xD;
+&lt;p&gt;Also, &lt;a href="http://springoneplatform.io/"&gt;SpringOne Platform&lt;/a&gt; is coming up soon!&lt;/p&gt;&#xD;
+&lt;/div&gt;</content>
+  </entry>
+  <entry>
+    <title>Spring Boot 1.3.4 released</title>
+    <link rel="alternate" href="https://spring.io/blog/2016/05/06/spring-boot-1-3-4-released" />
+    <category term="releases" label="Releases" />
+    <author>
+      <name>St¨¦phane Nicoll</name>
+    </author>
+    <id>tag:spring.io,2016-05-06:2493</id>
+    <updated>2016-05-06T14:10:31Z</updated>
+    <content type="html">&lt;p&gt;Spring Boot 1.3.4 has been released and is available now from &lt;a href="http://repo.spring.io/release"&gt;repo.spring.io&lt;/a&gt; and &lt;a href="http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22org.springframework.boot%22"&gt;Maven Central&lt;/a&gt;. &lt;/p&gt;
+&lt;p&gt;This maintenance release includes a &lt;a href="https://github.com/spring-projects/spring-boot/issues?q=milestone%3A1.3.4+is%3Aclosed"&gt;number of fixes&lt;/a&gt; and 3rd party dependency updates.&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://projects.spring.io/spring-boot/"&gt;Project Page&lt;/a&gt; | &lt;a href="https://github.com/spring-projects/spring-boot"&gt;GitHub&lt;/a&gt; | &lt;a href="https://github.com/spring-projects/spring-boot/issues"&gt;Issues&lt;/a&gt; | &lt;a href="http://docs.spring.io/spring-boot/docs/current/reference/htmlsingle"&gt;Documentation&lt;/a&gt;&lt;/p&gt;</content>
+  </entry>
+  <entry>
+    <title>Spring Framework 4.3 RC2, 4.2.6 and 3.2.17 available now</title>
+    <link rel="alternate" href="https://spring.io/blog/2016/05/06/spring-framework-4-3-rc2-4-2-6-and-3-2-17-available-now" />
+    <category term="releases" label="Releases" />
+    <author>
+      <name>St¨¦phane Nicoll</name>
+    </author>
+    <id>tag:spring.io,2016-05-06:2492</id>
+    <updated>2016-05-06T13:59:44Z</updated>
+    <content type="html">&lt;p&gt;It is my pleasure to announce that the Spring Framework &lt;a href="https://jira.spring.io/secure/ReleaseNote.jspa?projectId=10000&amp;version=15460"&gt;4.2.6&lt;/a&gt; and &lt;a href="https://jira.spring.io/secure/ReleaseNote.jspa?projectId=10000&amp;version=15518"&gt;3.2.17&lt;/a&gt; maintenance releases &lt;a href="http://projects.spring.io/spring-framework"&gt;are available now&lt;/a&gt;. We also released &lt;a href="https://jira.spring.io/secure/ReleaseNote.jspa?projectId=10000&amp;version=15487"&gt;the second release candidate of the 4.3 line&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;4.3 RC2 contains many refinements and fixes, especially in the web framework area. We are about to finalize 4.3 with a scheduled GA in early June. Preparations towards merging 5.0 features into master will happen right afterwards, with a first 5.0 milestone expected in July.&lt;/p&gt;
+&lt;p&gt;&lt;a href="http://projects.spring.io/spring-framework/"&gt;Project Page&lt;/a&gt; | &lt;a href="https://github.com/spring-projects/spring-framework"&gt;GitHub&lt;/a&gt; | &lt;a href="https://jira.spring.io/browse/SPR"&gt;Issues&lt;/a&gt; | &lt;a href="https://docs.spring.io/spring-framework/docs/current/spring-framework-reference/htmlsingle/"&gt;Documentation&lt;/a&gt;&lt;/p&gt;</content>
+  </entry>
   <entry>
     <title>Spring Security 4.1.0 Released</title>
     <link rel="alternate" href="https://spring.io/blog/2016/05/05/spring-security-4-1-0-released" />
@@ -760,106 +861,5 @@ public class TaskSinkApplication {&#xD;
     <content type="html">&lt;p&gt;We are pleased to announce that Spring Batch 3.0.7.RELEASE is now available via Maven Central, Github and the Pivotal download repository. This is the 7th maintenance release for the 3.0.x branch of Spring Batch and addresses a number of minor bug fixes and enhancements. Most important of them, it addresses compatibility issues with the latest Spring Data release as well as adding updates to support the latest Hibernate releases. Many thanks to all of those who submitted the many &lt;a href="https://github.com/spring-projects/spring-batch/pulls"&gt;pull requests&lt;/a&gt; that went into this release.&lt;/p&gt;
 &lt;p&gt;&lt;a href="https://spring.io/projects/spring-batch"&gt;Spring Batch Home&lt;/a&gt; | &lt;a href="https://github.com/spring-projects/spring-batch"&gt;Source on GitHub&lt;/a&gt; | &lt;a href="https://docs.spring.io/spring-batch/"&gt;Reference Documentation&lt;/a&gt;&lt;/p&gt;
 &lt;p&gt;We look forward to your feedback in &lt;a href="https://jira.spring.io/browse/BATCH"&gt;Jira&lt;/a&gt;, &lt;a href="http://stackoverflow.com/questions/tagged/spring-batch"&gt;StackOverflow&lt;/a&gt;, or to me directly via Twitter &lt;a href="twitter.com/michaelminella"&gt;@michaelminella&lt;/a&gt;.&lt;/p&gt;</content>
-  </entry>
-  <entry>
-    <title>Spring Security 4.1.0.RC2 Released</title>
-    <link rel="alternate" href="https://spring.io/blog/2016/04/21/spring-security-4-1-0-rc2-released" />
-    <category term="releases" label="Releases" />
-    <author>
-      <name>Rob Winch</name>
-    </author>
-    <id>tag:spring.io,2016-04-21:2474</id>
-    <updated>2016-04-21T14:13:50Z</updated>
-    <content type="html">&lt;p&gt;On behalf of the community, I&amp;rsquo;m pleased to announce the release of Spring Security 4.1.0.RC2. This release resolved over &lt;a href="https://github.com/spring-projects/spring-security/milestones/4.1.0%20RC2"&gt;60 tickets&lt;/a&gt;. &lt;/p&gt;&lt;h1&gt;&lt;a href="#what-rsquo-s-new-in-4-1" class="anchor" name="what-rsquo-s-new-in-4-1"&gt;&lt;/a&gt;What&amp;rsquo;s New in 4.1&lt;/h1&gt;
-&lt;p&gt;You can find a good summary of &lt;a href="http://docs.spring.io/spring-security/site/docs/4.1.0.RC2/reference/htmlsingle/#new"&gt;What&amp;rsquo;s New in Spring Security 4.1&lt;/a&gt; in the reference documentation.&lt;/p&gt;&lt;h1&gt;&lt;a href="#contributions" class="anchor" name="contributions"&gt;&lt;/a&gt;Contributions&lt;/h1&gt;
-&lt;p&gt;Without the community we couldn&amp;rsquo;t be the successful project we are today. I&amp;rsquo;d like to thank everyone that created issues &amp;amp; provided feedback. A special thanks to the following people who provided pull requests for this release:&lt;/p&gt;
-&lt;ul&gt;
-  &lt;li&gt;&lt;a href="https://github.com/spring-projects/spring-security/pull/51"&gt;#51&lt;/a&gt; - SEC-1932 Add Pbkdf2PasswordEncoder Thanks &lt;a href="https://github.com/rworsnop"&gt;Rob Worsnop&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href="https://github.com/spring-projects/spring-security/pull/180"&gt;#180&lt;/a&gt; - Allow setting alwaysRemember from RememberMeConfigurer Thanks &lt;a href="https://github.com/leon"&gt;Leon Radley&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href="https://github.com/spring-projects/spring-security/pull/183"&gt;#183&lt;/a&gt; - Remove duplicate test. Thanks &lt;a href="https://github.com/izeye"&gt;Johnny Lim&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href="https://github.com/spring-projects/spring-security/pull/193"&gt;#193&lt;/a&gt; - Fix corrupted character and add formatting per the duplicated text block Thanks &lt;a href="https://github.com/artbristol"&gt;Art O Cathain&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href="https://github.com/spring-projects/spring-security/pull/196"&gt;#196&lt;/a&gt; - SEC-2978: fix typos in documentation Thanks &lt;a href="https://github.com/skyhills13"&gt;Soeun Park&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href="https://github.com/spring-projects/spring-security/pull/197"&gt;#197&lt;/a&gt; - Update HttpSecurity.java logout() sample code Thanks &lt;a href="https://github.com/JTWalraven"&gt;Jeffrey Walraven&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href="https://github.com/spring-projects/spring-security/pull/228"&gt;#228&lt;/a&gt; - Fix typos Thanks &lt;a href="https://github.com/izeye"&gt;Johnny Lim&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href="https://github.com/spring-projects/spring-security/pull/3764"&gt;#3764&lt;/a&gt; - Authentication Success and Failure Handlers in AbstractPreAuthenticatedProcessingFilter Thanks &lt;a href="https://github.com/shazin"&gt;Shazin Sadakath&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href="https://github.com/spring-projects/spring-security/pull/3777"&gt;#3777&lt;/a&gt; - Content Negotiating Logout Success Handler #3282 Thanks &lt;a href="https://github.com/shazin"&gt;Shazin Sadakath&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href="https://github.com/spring-projects/spring-security/pull/3779"&gt;#3779&lt;/a&gt; - BouncyCastle implementation of &amp;ldquo;AES/CBC/PKCS5Padding&amp;rdquo; and &amp;ldquo;AES/GCM/NoPadding&amp;rdquo; Thanks &lt;a href="https://github.com/william-tran"&gt;Will Tran&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href="https://github.com/spring-projects/spring-security/pull/3782"&gt;#3782&lt;/a&gt; - SpEL variables can be referenced in the expression using the syntax #¡­ Thanks &lt;a href="https://github.com/ksokol"&gt;Kamill Sokol&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href="https://github.com/spring-projects/spring-security/pull/3785"&gt;#3785&lt;/a&gt; - Fix typo in xsd Thanks &lt;a href="https://github.com/Qkyrie"&gt;Quinten De Swaef&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href="https://github.com/spring-projects/spring-security/pull/3793"&gt;#3793&lt;/a&gt; - SecurityMockMvcResultMatchers.withAuthorities(Collection&amp;lt;? extends GrantedAuthority&amp;gt;) Thanks &lt;a href="https://github.com/eddumelendez"&gt;Edd¨² Mel¨¦ndez Gonzales&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href="https://github.com/spring-projects/spring-security/pull/3800"&gt;#3800&lt;/a&gt; - Add GitHub Pull Request template Thanks &lt;a href="https://github.com/vpavic"&gt;Vedran Pavi?&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href="https://github.com/spring-projects/spring-security/pull/3803"&gt;#3803&lt;/a&gt; - Fix typo in setMessageExpessionHandler Thanks &lt;a href="https://github.com/McNetic"&gt;Nicolai Ehemann&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href="https://github.com/spring-projects/spring-security/pull/3807"&gt;#3807&lt;/a&gt; - Update ExpressionUrlAuthorizationConfigurer.java Thanks &lt;a href="https://github.com/mmerdes"&gt;Matthias Merdes&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href="https://github.com/spring-projects/spring-security/pull/3811"&gt;#3811&lt;/a&gt; - Update TestNG Thanks &lt;a href="https://github.com/mdeinum"&gt;Marten Deinum&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href="https://github.com/spring-projects/spring-security/pull/3813"&gt;#3813&lt;/a&gt; - HeaderWriterFilter: Fix Javadoc. Thanks &lt;a href="https://github.com/simono"&gt;Simon Olofsson&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href="https://github.com/spring-projects/spring-security/pull/3816"&gt;#3816&lt;/a&gt; - Skip tests when AesBytesEncryptor can&amp;rsquo;t be created in CBC or GCM mode. Thanks &lt;a href="https://github.com/william-tran"&gt;Will Tran&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href="https://github.com/spring-projects/spring-security/pull/3817"&gt;#3817&lt;/a&gt; - Refactor test assumptions about JCE to common class. Thanks &lt;a href="https://github.com/william-tran"&gt;Will Tran&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href="https://github.com/spring-projects/spring-security/pull/3819"&gt;#3819&lt;/a&gt; - Fix HpkpHeaderWriter Javadoc formatting Thanks &lt;a href="https://github.com/ansyeow"&gt;Andrew NS Yeow&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href="https://github.com/spring-projects/spring-security/pull/3822"&gt;#3822&lt;/a&gt; - Only use methods present in Bouncy Castle 1.47. Thanks &lt;a href="https://github.com/william-tran"&gt;Will Tran&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;&lt;a href="https://github.com/spring-projects/spring-security/pull/3826"&gt;#3826&lt;/a&gt; - Remove duplicate words Thanks &lt;a href="https://github.com/izeye"&gt;Johnny Lim&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;&lt;h1&gt;&lt;a href="#feedback-please" class="anchor" name="feedback-please"&gt;&lt;/a&gt;Feedback Please&lt;/h1&gt;
-&lt;p&gt;If you have feedback on this release, I encourage you to reach out via &lt;a href="http://stackoverflow.com/questions/tagged/spring-security"&gt;StackOverflow&lt;/a&gt;, &lt;a href="https://github.com/spring-projects/spring-security/issues"&gt;GitHub Issues&lt;/a&gt;, or via the comments section. You can also ping me &lt;a href="https://twitter.com/rob_winch"&gt;@rob_winch&lt;/a&gt; or Joe (our latest full time Spring Security team member) &lt;a href="https://twitter.com/joe_grandja"&gt;@joe_grandja&lt;/a&gt; on Twitter.&lt;/p&gt;
-&lt;p&gt;Of course the best feedback comes in the form of &lt;a href="https://github.com/spring-projects/spring-security/blob/master/CONTRIBUTING.md"&gt;contributions&lt;/a&gt;.&lt;/p&gt;
-&lt;p&gt;&lt;a href="http://projects.spring.io/spring-security/"&gt;Project Site&lt;/a&gt; | &lt;a href="http://docs.spring.io/spring-security/site/docs/4.1.0.RC2/reference/htmlsingle/"&gt;Reference&lt;/a&gt; | &lt;a href="http://docs.spring.io/spring-security/site/docs/4.1.0.RC2/guides/html5/"&gt;Guides&lt;/a&gt; | &lt;a href="http://stackoverflow.com/questions/tagged/spring-security"&gt;Help&lt;/a&gt;&lt;/p&gt;</content>
-  </entry>
-  <entry>
-    <title>Understanding Reactive types</title>
-    <link rel="alternate" href="https://spring.io/blog/2016/04/19/understanding-reactive-types" />
-    <category term="engineering" label="Engineering" />
-    <author>
-      <name>S¨¦bastien Deleuze</name>
-    </author>
-    <id>tag:spring.io,2016-04-04:2450</id>
-    <updated>2016-04-19T13:37:00Z</updated>
-    <content type="html">&lt;p&gt;Following previous &lt;a href="https://spring.io/blog/2016/02/09/reactive-spring"&gt;Reactive Spring&lt;/a&gt; and &lt;a href="https://spring.io/blog/2016/03/11/reactor-core-2-5-becomes-a-unified-reactive-foundation-on-java-8"&gt;Reactor Core 2.5&lt;/a&gt; blog posts, I would like to explain why Reactive types are useful and how they compare to other asynchronous types, based on what we have learned while working on the Spring Framework 5 upcoming Reactive support.&lt;/p&gt;&lt;h2&gt;&lt;a href="#why-using-reactive-types" class="anchor" name="why-using-reactive-types"&gt;&lt;/a&gt;Why using Reactive types?&lt;/h2&gt;
-&lt;p&gt;Reactive types are not intended to allow you to process your requests or data faster, in fact they will introduce a small overhead compared to regular blocking processing. Their strength lies in their capacity to serve more request concurrently, and to handle operations with latency, such as requesting data from a remote server, more efficiently. They allow you to provide a better quality of service and a predictable capacity planning by dealing natively with time and latency without consuming more resources. Unlike traditional processing that blocks the current thread while waiting a result, a Reactive API that waits costs nothing, requests only the amount of data it is able to process and bring new capabilities since it deals with stream of data, not only with individual elements one by one.&lt;/p&gt;&lt;h2&gt;&lt;a href="#before-java-8" class="anchor" name="before-java-8"&gt;&lt;/a&gt;Before Java 8&lt;/h2&gt;
-&lt;p&gt;Before Java 8, asynchronous non-blocking behavior was not obvious to implement for at least two reasons. The first reason is that callback based API required verbose anonymous classes and are not easy to chain. The second reason is that &lt;a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Future.html"&gt;&lt;code&gt;Future&lt;/code&gt;&lt;/a&gt; type is asynchronous &lt;strong&gt;but&lt;/strong&gt; blocks the current thread until the computation completes when you try to get the result with the &lt;a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/Future.html#get--"&gt;&lt;code&gt;get()&lt;/code&gt;&lt;/a&gt; method. That&amp;rsquo;s why Spring Framework 4.0 introduced &lt;a href="https://docs.spring.io/spring/docs/current/javadoc-api/org/springframework/util/concurrent/ListenableFuture.html"&gt;&lt;code&gt;ListenableFuture&lt;/code&gt;&lt;/a&gt;, a &lt;code&gt;Future&lt;/code&gt; implementation that adds non-blocking callback-based capabilities.&lt;/p&gt;&lt;h2&gt;&lt;a href="#lambdas-completablefuture-and-stream" class="anchor" name="lambdas-completablefuture-and-stream"&gt;&lt;/a&gt;Lambdas, CompletableFuture and Stream&lt;/h2&gt;
-&lt;p&gt;Then Java 8 introduced lambdas and &lt;a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletableFuture.html"&gt;&lt;code&gt;CompletableFuture&lt;/code&gt;&lt;/a&gt;. Lambdas allow to write concise callbacks, while &lt;a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletionStage.html"&gt;&lt;code&gt;CompletionStage&lt;/code&gt;&lt;/a&gt; interface and &lt;a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletableFuture.html"&gt;&lt;code&gt;CompletableFuture&lt;/code&gt;&lt;/a&gt; class finally allows to deal with future in a non-blocking way and push-based fashion, while providing capabilities to chain such deferred result processing.&lt;/p&gt;
-&lt;p&gt;Java 8 also introduced &lt;a href="https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html"&gt;&lt;code&gt;Stream&lt;/code&gt;&lt;/a&gt;, which has been designed to deal efficiently with stream of data (including primitive types) that can be accessed with no or very little latency. It is pull-based, can only be used once, lacks time-related operations and can perform parallel computations but without being able to specify the thread pool to use. As explained by &lt;a href="http://stackoverflow.com/questions/17960656/is-it-possible-to-use-java-8-streams-api-for-asynchronous-processing/18826615#comment36545451_18826615"&gt;Brian Goetz&lt;/a&gt;,&lt;br/&gt;it has not been designed to deal with operation with latency, such as I/O operations. And that is where Reactive APIs like Reactor or RxJava come in.&lt;/p&gt;&lt;h2&gt;&lt;a href="#reactive-apis" class="anchor" name="reactive-apis"&gt;&lt;/a&gt;Reactive APIs&lt;/h2&gt;
-&lt;p&gt;Reactive APIs such as &lt;a href="https://projectreactor.io/"&gt;Reactor&lt;/a&gt; also provide operators like Java 8 Stream, but they work more generally with any stream sequence (not just Collections) and allow to define a pipeline of transforming operations that will apply to the data passing through it thanks to a handy fluent API and using lambdas. They are designed to handle both synchronous or asynchronous operations, and allow you to buffer, merge, concatenate, or apply a wide range of transformations to your data.&lt;/p&gt;
-&lt;p&gt;Initially Reactive APIs were only designed to deal with streams of data, i.e. N elements, for example, using Reactor&amp;rsquo;s &lt;a href="http://projectreactor.io/core/docs/api/reactor/core/publisher/Flux.html"&gt;&lt;code&gt;Flux&lt;/code&gt;&lt;/a&gt;:&lt;/p&gt;
-&lt;pre&gt;&lt;code class="prettyprint java"&gt;reactiveService.getResults()&#xD;
-    .mergeWith(Flux.interval(100))&#xD;
-    .doOnNext(serviceA::someObserver)&#xD;
-    .map(d -&amp;gt; d * 2)&#xD;
-    .take(3)&#xD;
-    .onErrorResumeWith(errorHandler::fallback)&#xD;
-    .doAfterTerminate(serviceM::incrementTerminate)&#xD;
-    .consume(System.out::println);
-&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;But during our work on Spring Framework 5, it became apparent that there was a clear need to distinguish between streams of 1 or N elements, and that is why Reactor provides the &lt;a href="http://projectreactor.io/core/docs/api/reactor/core/publisher/Mono.html"&gt;&lt;code&gt;Mono&lt;/code&gt;&lt;/a&gt; type. &lt;code&gt;Mono&lt;/code&gt; is the Reactive equivalent of &lt;code&gt;CompletableFuture&lt;/code&gt; type, and allow to provide a consistent API for handling single and multiple elements in a Reactive way.&lt;/p&gt;
-&lt;pre&gt;&lt;code class="prettyprint java"&gt;Mono.any(reactiveServiceA.findRecent(time), reactiveServiceB.findRecent(time)&#xD;
-    .timeout(Duration.ofSeconds(3), errorHandler::fallback)&#xD;
-    .doOnSuccess(r -&amp;gt; reactiveServiceC.incrementSuccess())&#xD;
-    .consume(System.out::println);
-&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;If you have a deeper look to &lt;a href="http://projectreactor.io/core/docs/api/reactor/core/publisher/Flux.html"&gt;&lt;code&gt;Flux&lt;/code&gt;&lt;/a&gt; and &lt;a href="http://projectreactor.io/core/docs/api/reactor/core/publisher/Mono.html"&gt;&lt;code&gt;Mono&lt;/code&gt;&lt;/a&gt;, you will notice these types implement the &lt;code&gt;Publisher&lt;/code&gt; interface from the Reactive Streams specification.&lt;/p&gt;&lt;h2&gt;&lt;a href="#reactive-streams" class="anchor" name="reactive-streams"&gt;&lt;/a&gt;Reactive Streams&lt;/h2&gt;
-&lt;p&gt;Reactor is built on the &lt;a href="http://www.reactive-streams.org"&gt;Reactive Streams&lt;/a&gt; specification. Reactive Streams is composed of &lt;a href="http://www.reactive-streams.org/reactive-streams-1.0.0-javadoc/"&gt;4 simple Java interfaces&lt;/a&gt; (&lt;code&gt;Publisher&lt;/code&gt;, &lt;code&gt;Subscriber&lt;/code&gt;, &lt;code&gt;Subscription&lt;/code&gt; and &lt;code&gt;Processor&lt;/code&gt;), a &lt;a href="https://github.com/reactive-streams/reactive-streams-jvm/blob/v1.0.0/README.md#specification"&gt;textual specification&lt;/a&gt; and a &lt;a href="http://www.reactive-streams.org/reactive-streams-tck-1.0.0-javadoc/"&gt;TCK&lt;/a&gt;. It is the cornerstone of every modern Reactive library and a must have for interoperability purpose.&lt;/p&gt;
-&lt;p&gt;The core concern of Reactive Streams is handling backpressure. In a nutshell, backpressure is a mechanism that permits a receiver to ask how much data it wants to receive from the emitter. It allows:&lt;/p&gt;
-&lt;ul&gt;
-  &lt;li&gt;The receiver to start receiving data only when it is ready to process it&lt;/li&gt;
-  &lt;li&gt;To control the inflight amount of data&lt;/li&gt;
-  &lt;li&gt;Efficient handling of slow emitter/fast receiver or fast emitter/slow receiver use cases&lt;/li&gt;
-  &lt;li&gt;To switch from a dynamic push-pull strategy to a push-based only strategy if you request &lt;code&gt;Long.MAX_VALUE&lt;/code&gt; elements&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;At first glance, the &lt;a href="http://www.reactive-streams.org/reactive-streams-1.0.0-javadoc/org/reactivestreams/Publisher.html"&gt;&lt;code&gt;Publisher&lt;/code&gt;&lt;/a&gt; interface seems deceivingly simple to implement; but doing so in complete conformance with the specification turns out to be pretty hard, and users can&amp;rsquo;t do anything with raw &lt;code&gt;Publisher&lt;/code&gt; except subscribing to it! That¡¯s why it¡¯s typically a better idea to rely on a Reactive Streams implementation, such as Reactor, to help you out with this.&lt;/p&gt;
-&lt;p&gt;Note that Java 9 &lt;a href="http://cs.oswego.edu/pipermail/concurrency-interest/2015-January/013641.html"&gt;will include&lt;/a&gt; the Reactive Streams interfaces in the &lt;code&gt;java.util.concurrent.Flow&lt;/code&gt; container class, further showing the relevance of Reactive Streams within the JDK.&lt;/p&gt;
-&lt;p&gt;It is also important to notice that convergence toward Reactive Streams and &lt;a href="https://github.com/reactor/reactor-core/tree/master/src/main/java/reactor/core/converter"&gt;Reactor conversion capabilities&lt;/a&gt; allow easy and efficient conversion from one Reactive type to another at runtime.&lt;/p&gt;&lt;h2&gt;&lt;a href="#conclusion" class="anchor" name="conclusion"&gt;&lt;/a&gt;Conclusion&lt;/h2&gt;
-&lt;p&gt;I hope this blog post will help you to have a better understanding of Reactive types.&lt;/p&gt;
-&lt;p&gt;We are working on Reactive support with types like Reactor &lt;code&gt;Mono&lt;/code&gt; and &lt;code&gt;Flux&lt;/code&gt; in various Spring projects like Spring Framework, Spring Boot, Spring Data, Spring Security and Spring Cloud.&lt;/p&gt;
-&lt;p&gt;But your upcoming Reactive application will also use directly these types too, for example at &lt;code&gt;@Repository&lt;/code&gt;, &lt;code&gt;@Service&lt;/code&gt; or &lt;code&gt;@Controller&lt;/code&gt; methods level, because building a Reactive application means using Reactive semantics where you have to deal with latency or streams (we will also provide some guidance to integrate blocking API).&lt;/p&gt;
-&lt;p&gt;We will post additional Reactive blog posts in the upcoming months. Feel free to familiarize yourself with &lt;a href="https://github.com/reactor/lite-rx-api-hands-on/"&gt;this test-driven Lite Rx API Hands-On&lt;/a&gt; that will teach you how to use &lt;code&gt;Flux&lt;/code&gt; and &lt;code&gt;Mono&lt;/code&gt;, and as usual your feedbacks are welcome!&lt;/p&gt;
-&lt;p&gt;If you happen to be in Barcelona mid May (never a bad time to be in Barcelona anyway!), don¡¯t miss the chance to join the &lt;a href="http://www.springio.net/"&gt;Spring I/O conference&lt;/a&gt;. Also, the registration for &lt;a href="http://springoneplatform.io/"&gt;SpringOne Platform&lt;/a&gt; (early August, Las Vegas) has opened recently, in case you want to benefit from early bird ticket pricing.&lt;/p&gt;</content>
-  </entry>
-  <entry>
-    <title>Spring Cloud Brixton.RC2 now available</title>
-    <link rel="alternate" href="https://spring.io/blog/2016/04/19/spring-cloud-brixton-rc2-now-available" />
-    <category term="engineering" label="Engineering" />
-    <author>
-      <name>Dave Syer</name>
-    </author>
-    <id>tag:spring.io,2016-04-19:2473</id>
-    <updated>2016-04-19T11:01:00Z</updated>
-    <content type="html">&lt;p&gt;The latest milestone version of Spring Cloud is &amp;ldquo;Brixton.RC2&amp;rdquo; and it is available now from the usual repositories (details in the &lt;a href="http://projects.spring.io/spring-cloud/"&gt;home page&lt;/a&gt;). This is a bugfix release building on the RC1, and there are no notable new features. If all goes well we&amp;rsquo;d like to get to a RELEASE in a week or two.&lt;/p&gt;</content>
   </entry>
 </feed>
